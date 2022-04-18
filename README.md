@@ -1,0 +1,2 @@
+# MPI-LPP
+Programação paralela
