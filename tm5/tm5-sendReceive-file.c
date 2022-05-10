@@ -9,8 +9,9 @@ int main(int argc, char **argv){
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     MPI_Comm_size(MPI_COMM_WORLD, &size);
     MPI_Status status;
+    int array_size;
     int nSearch;
-    int array_size = 100;
+    FILE *file;
 
     if (size % 2 != 0){
         printf("O número de processos deve ser par!\n");
@@ -19,18 +20,27 @@ int main(int argc, char **argv){
 
     // Se for processo 0, deve alocar/receber o array e o número de elementos da busca
     if (rank == 0){
-        printf("Qual número você quer encontrar no array? \n");
-        scanf("%d", &nSearch);
+
+        file = fopen("tm5arq.txt", "r");
+
+        int i = 0;
+        int j = 0;
+        fscanf (file, "%d", &array_size);
+        fscanf (file, "%d", &nSearch);
+
+        printf("Array size: %d - nSearch: %d \n", array_size, nSearch);
 
         int buffer[array_size];
 
-        // Inicializando buffer com números aleatórios entre 0 e 50
-        for (int i = 0; i < array_size; ++i){
-            buffer[i] = (rand() % 51);
-            printf(" buffer: %d \n", buffer[i]);
+        while (!feof (file)){
+            fscanf (file, "%d", &i);
+            buffer[j] = i;
+            printf("Adicionando: %d \n", buffer[j]);
+            j++;
         }
+        fclose (file);
 
-        int acc = array_size / (size);
+        int acc = array_size / size;
         int lastSend = acc;
 
         // Começando em 1 para não enviar ao mestre
@@ -38,7 +48,6 @@ int main(int argc, char **argv){
             MPI_Send(&nSearch, 1, MPI_INT, i, status.MPI_TAG, MPI_COMM_WORLD);
             MPI_Send(&acc, 1, MPI_INT, i, status.MPI_TAG, MPI_COMM_WORLD);
             MPI_Send(&buffer[lastSend], acc, MPI_INT, i, status.MPI_TAG, MPI_COMM_WORLD);
-
             //Movendo um ponteiro para as divisões do array
             lastSend += acc;
         }
